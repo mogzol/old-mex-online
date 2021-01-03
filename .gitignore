@@ -1,0 +1,7 @@
+node_modules
+client/build
+server/build
+.vscode
+.env
+.eslintcache
+react-app-env.d.ts
