@@ -6,14 +6,15 @@ import { Game } from "./Game";
 import { Route, Switch } from "react-router";
 import { BrowserRouter } from "react-router-dom";
 import { RoomEntry } from "./RoomEntry";
-import { Button, CssBaseline, IconButton, ThemeProvider } from "@material-ui/core";
+import { CssBaseline, IconButton, ThemeProvider, Tooltip } from "@material-ui/core";
 import { darkTheme, lightTheme } from "./theme";
-import { Brightness4, Brightness7 } from "@material-ui/icons";
+import { Brightness4, Brightness7, Link } from "@material-ui/icons";
 
 const themeMediaQuery = window.matchMedia?.("(prefers-color-scheme: dark)");
 
 export function App() {
   const [theme, setTheme] = React.useState(themeMediaQuery?.matches ? darkTheme : lightTheme);
+  const [copyText, setCopyText] = React.useState("Copy link");
 
   function changeTheme() {
     if (theme === lightTheme) {
@@ -21,6 +22,18 @@ export function App() {
     } else {
       setTheme(lightTheme);
     }
+  }
+
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setCopyText("Copied to clipboard!");
+    } catch (e) {
+      setCopyText("Error! Please copy URL manually.");
+    }
+
+    await new Promise((r) => setTimeout(r, 2000));
+    setCopyText("Copy link");
   }
 
   useEffect(() => {
@@ -39,10 +52,20 @@ export function App() {
       <Container maxWidth="md">
         <Box py={4} display="flex" alignItems="center" justifyContent="center">
           <Typography variant="h3">Old Mex Online</Typography>
+
           <Box marginLeft={2}>
-            <IconButton onClick={changeTheme}>
-              {theme === lightTheme ? <Brightness4 /> : <Brightness7 />}
-            </IconButton>
+            <Tooltip title={copyText}>
+              <IconButton onClick={copyLink}>
+                <Link />
+              </IconButton>
+            </Tooltip>
+          </Box>
+          <Box marginLeft={0}>
+            <Tooltip title="Change Theme">
+              <IconButton onClick={changeTheme}>
+                {theme === lightTheme ? <Brightness4 /> : <Brightness7 />}
+              </IconButton>
+            </Tooltip>
           </Box>
         </Box>
         <Box>
