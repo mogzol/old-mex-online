@@ -22,11 +22,16 @@ interface Params {
   roomName: string;
 }
 
+interface ErrorData {
+  error: string;
+  reset?: boolean;
+}
+
 export interface GameData {
   you: string;
   name: string;
-  roundOver: string;
-  preRolls: [number, number][];
+  roundOver: boolean;
+  rolling: boolean;
   currentRoll: [number, number];
   currentRollTimestamp: string;
   lowestRoll: number;
@@ -74,24 +79,23 @@ export function Game() {
       )
     );
 
+    ws.addEventListener("close", (e) => {
+      setError(e.reason || "Lost connection");
+      setPlayerName(undefined);
+    });
+
     ws.addEventListener("message", (event) => {
-      const json = JSON.parse(event.data);
+      const json: GameData | ErrorData = JSON.parse(event.data);
       console.log(json);
 
-      if (json.error) {
+      if ("error" in json) {
         setError(json.error);
-
-        if (json.clearName) {
-          setPlayerName("");
-        }
-
         return;
       }
 
-      // Once we get data back from server, we can use this socket
       setSocket(ws);
       setGameData(json);
-      setRolling(false);
+      setRolling(json.rolling);
     });
 
     return () => ws.close();
@@ -141,7 +145,7 @@ function ErrorDialog(props: ErrorDialogProps) {
       <DialogTitle>Error</DialogTitle>
       <DialogContent>{props.error}</DialogContent>
       <DialogActions>
-        <Button onClick={props.onDismiss} color="primary">
+        <Button onClick={props.onDismiss} color="secondary">
           Dismiss
         </Button>
       </DialogActions>

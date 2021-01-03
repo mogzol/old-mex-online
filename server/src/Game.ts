@@ -14,10 +14,10 @@ export class Game {
   public readonly name: string;
   private onDestroy: (game: Game) => void;
   private players: Player[] = [];
-  private roundOver = false;
-  private preRolls: [number, number][] = []; // Only used for in-sync "random" dice while rolling
   private maxRolls: number = 3;
   private lowestRoll: number = 0;
+  private roundOver: boolean = false;
+  private rolling: boolean = false;
 
   private _currentRoll: [number, number] = null;
   private currentRollTimestamp: Date = new Date();
@@ -67,9 +67,9 @@ export class Game {
           you: player.name,
           name: this.name,
           roundOver: this.roundOver,
+          rolling: this.rolling,
           currentRoll: this.currentRoll,
           currentRollTimestamp: this.currentRollTimestamp,
-          preRolls: this.preRolls,
           maxRolls: this.maxRolls,
           lowestRoll: this.lowestRoll,
           players: playersData,
@@ -95,7 +95,12 @@ export class Game {
     return [player, playerIndex];
   }
 
-  private handleStay(player: Player, playerIndex: number) {
+  private handleStay(player: Player, playerIndex: number, ws: WebSocket) {
+    if (!this.currentRoll) {
+      ws.send(JSON.stringify({ error: "No current roll." }));
+      return;
+    }
+
     player.rolling = false;
     player.roll = this.currentRoll;
     player.rollValue = Number(player.roll.join(""));
@@ -123,8 +128,7 @@ export class Game {
 
   public addPlayer(name: string, ws: WebSocket) {
     if (this.players.some((p) => p.name === name)) {
-      ws.send(JSON.stringify({ error: "Player already exists", clearName: true }));
-      ws.close();
+      ws.close(1000, "Player already exists");
       return;
     }
 
@@ -145,21 +149,32 @@ export class Game {
     this.update();
   }
 
-  public roll(ws: WebSocket) {
+  public async roll(ws: WebSocket) {
+    if (this.rolling) {
+      return;
+    }
+
     const [player, playerIndex] = this.findPlayer(ws);
 
     if (!player) {
       return;
     }
 
-    this.preRolls = [...new Array(Math.floor(Math.random() * 30) + 20)].map(() =>
-      this.generateRoll(false)
-    );
+    // Start by clearing current roll and setting rolling to true
+    this.rolling = true;
+    this.currentRoll = null;
+    this.update();
+
+    // Wait a bit before sending result
+    await new Promise((r) => setTimeout(r, 750 + Math.random() * 1500));
+
+    // Finally send actual roll result
+    this.rolling = false;
     this.currentRoll = this.generateRoll();
     player.rollCount++;
 
     if (player.rollCount >= this.maxRolls) {
-      this.handleStay(player, playerIndex);
+      this.handleStay(player, playerIndex, ws);
     }
 
     this.update();
@@ -172,7 +187,7 @@ export class Game {
       return;
     }
 
-    this.handleStay(player, playerIndex);
+    this.handleStay(player, playerIndex, ws);
     this.update();
   }
 
@@ -209,16 +224,15 @@ export class Game {
   }
 
   /**
-   * Generates a roll.
-   * @param order If true, the first die will always be equal to or greater than the second.
+   * Generates a roll. The first die will always be equal to or greater than the second.
    */
-  private generateRoll(order: boolean = true): [number, number] {
+  private generateRoll(): [number, number] {
     const roll: [number, number] = [
       Math.floor(Math.random() * 6) + 1,
       Math.floor(Math.random() * 6) + 1,
     ];
 
-    if (order && roll[0] < roll[1]) {
+    if (roll[0] < roll[1]) {
       const temp = roll[0];
       roll[0] = roll[1];
       roll[1] = temp;

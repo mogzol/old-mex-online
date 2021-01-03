@@ -29,6 +29,7 @@ const useStyles = makeStyles((theme: Theme) =>
       display: "flex",
       flexDirection: "column",
       justifyContent: "center",
+      borderRadius: 5,
       borderWidth: 8,
       borderStyle: "solid",
       borderColor: theme.palette.type === "dark" ? colors.grey[900] : colors.brown[700],
@@ -49,41 +50,8 @@ const useStyles = makeStyles((theme: Theme) =>
 export function GameControls(props: Props) {
   const classes = useStyles();
   const you = props.gameData?.players.find((p) => p.name === props.gameData?.you);
-
-  const [roll, setRoll] = useState<[number, number]>(props.gameData?.currentRoll ?? [1, 2]);
-  const [showRollingAnimation, setShowRollingAnimation] = useState(false);
-
-  useEffect(() => {
-    if (!props.gameData) {
-      return;
-    }
-
-    const preRolls = props.gameData.preRolls;
-    const trueRoll = props.gameData.currentRoll;
-
-    if (!trueRoll) {
-      setRoll([1, 2]);
-      return;
-    }
-
-    setShowRollingAnimation(true);
-
-    const timeouts: number[] = [];
-    const delay = 50;
-
-    for (let i = 0; i < preRolls.length; i++) {
-      timeouts.push(window.setTimeout(() => setRoll(preRolls[i]), delay * i));
-    }
-
-    timeouts.push(
-      window.setTimeout(() => {
-        setRoll(trueRoll);
-        setShowRollingAnimation(false);
-      }, delay * preRolls.length)
-    );
-
-    return () => timeouts.forEach(window.clearTimeout);
-  }, [props.gameData?.currentRollTimestamp]);
+  const roller = props.gameData?.players.find((p) => p.rolling);
+  const roll = props.gameData?.currentRoll ?? [1, 2];
 
   return (
     <>
@@ -104,7 +72,9 @@ export function GameControls(props: Props) {
 
       <Box className={classes.diceBox}>
         <Typography variant="subtitle2" align="center" color="textSecondary">
-          {props.gameData?.lowestRoll
+          {props.gameData?.roundOver
+            ? "Round over"
+            : props.gameData?.lowestRoll
             ? `Must beat ${props.gameData?.lowestRoll} for ${props.gameData?.maxRolls}`
             : "Round start"}
         </Typography>
@@ -117,12 +87,12 @@ export function GameControls(props: Props) {
               m={2}
               boxShadow="0 3px 10px #0005"
               random={props.rolling}
-              rollAnimation={props.rolling || showRollingAnimation ? i + 1 : 0}
+              rollAnimation={props.rolling ? i + 1 : 0}
             />
           ))}
         </Box>
         <Typography variant="subtitle2" align="center" color="textSecondary">
-          Roll {you?.rollCount} of {props.gameData?.maxRolls}
+          Roll {roller?.rollCount} of {props.gameData?.maxRolls}
         </Typography>
       </Box>
 
@@ -131,7 +101,7 @@ export function GameControls(props: Props) {
           className={classes.button}
           variant="contained"
           color="primary"
-          disabled={!you?.rolling}
+          disabled={props.rolling || !you?.rolling}
           onClick={props.onRoll}
         >
           Roll
@@ -140,7 +110,7 @@ export function GameControls(props: Props) {
           className={classes.button}
           variant="contained"
           color="secondary"
-          disabled={!you?.rolling || you?.rollCount < 1}
+          disabled={props.rolling || !you?.rolling || you?.rollCount < 1}
           onClick={props.onStay}
         >
           Stay

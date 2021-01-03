@@ -11,6 +11,11 @@ interface Props extends BoxProps {
 
 const useStyles = makeStyles<Theme, Props>({
   die: {
+    display: "grid",
+    gridTemplateColumns: "repeat(3, auto)",
+    gridTemplateRows: "repeat(3, auto)",
+    alignContent: "space-evenly",
+    justifyContent: "space-evenly",
     background: "white",
     height: (props) => props.size,
     width: (props) => props.size,
@@ -19,20 +24,20 @@ const useStyles = makeStyles<Theme, Props>({
     borderRadius: "13%",
     padding: (props) => props.size / 8,
   },
+  flippedDie: {
+    direction: "rtl",
+  },
+  rotatedDie: {
+    gridAutoFlow: "column",
+  },
   dot: {
     flexBasis: "33%",
+    borderRadius: "100%",
+    width: (props) => Math.floor(props.size / 5.5),
     height: (props) => Math.floor(props.size / 5.5),
   },
   visibleDot: {
-    "&::before": {
-      borderRadius: "100%",
-      width: (props) => Math.floor(props.size / 5.5),
-      height: "100%",
-      background: "black",
-      display: "block",
-      content: "' '",
-      margin: "auto",
-    },
+    background: "black",
   },
   rollingDie: {
     opacity: 0.8,
@@ -94,7 +99,7 @@ export function Dice(props: Props) {
         setRandomValue(Math.floor(Math.random() * 6) + 1);
       }, 50);
 
-      return clearInterval(handle);
+      return () => clearInterval(handle);
     }
   }, [props.random]);
 
@@ -105,11 +110,11 @@ export function Dice(props: Props) {
       className={clsx(classes.die, {
         [classes.rollingDie]: props.rollAnimation,
         [classes.rollingDieAlt]: props.rollAnimation && props.rollAnimation % 2,
+
+        // While random is happening, rotate the die randomly to make it look better
+        [classes.rotatedDie]: props.random && Math.random() < 0.5,
+        [classes.flippedDie]: props.random && Math.random() < 0.5,
       })}
-      display="flex"
-      flexWrap="wrap"
-      justifyContent="center"
-      alignItems="center"
       {...props}
     >
       <div className={clsx(classes.dot, { [classes.visibleDot]: value > 3 })} />
