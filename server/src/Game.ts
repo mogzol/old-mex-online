@@ -17,18 +17,9 @@ export class Game {
   private maxRolls: number = 3;
   private lowestRoll: number = 0;
   private roundOver: boolean = false;
+  private roundMexicos: number = 0;
   private rolling: boolean = false;
-
-  private _currentRoll: [number, number] = null;
-  private currentRollTimestamp: Date = new Date();
-  private get currentRoll() {
-    return this._currentRoll;
-  }
-
-  private set currentRoll(value: [number, number]) {
-    this._currentRoll = value;
-    this.currentRollTimestamp = new Date();
-  }
+  private currentRoll: [number, number] = null;
 
   constructor(name: string, onDestroy: (game: Game) => void) {
     this.name = name;
@@ -67,11 +58,11 @@ export class Game {
           you: player.name,
           name: this.name,
           roundOver: this.roundOver,
+          roundMexicos: this.roundMexicos,
           rolling: this.rolling,
           currentRoll: this.currentRoll,
-          currentRollTimestamp: this.currentRollTimestamp,
-          maxRolls: this.maxRolls,
           lowestRoll: this.lowestRoll,
+          maxRolls: this.maxRolls,
           players: playersData,
         })
       );
@@ -105,15 +96,16 @@ export class Game {
     player.roll = this.currentRoll;
     player.rollValue = Number(player.roll.join(""));
 
+    if (player.rollValue === 21) {
+      this.roundMexicos++;
+    }
+
     // If first roll of round, set max rolls
     if (this.players.every((p) => !p.roll || p.name === player.name)) {
       this.maxRolls = player.rollCount;
     }
 
-    if (
-      !this.lowestRoll ||
-      !this.players.some((p) => this.compareRolls(player.rollValue, p.rollValue))
-    ) {
+    if (!this.lowestRoll || this.compareRolls(player.rollValue, this.lowestRoll)) {
       this.lowestRoll = player.rollValue;
     }
 
@@ -219,6 +211,7 @@ export class Game {
     this.currentRoll = null;
     this.maxRolls = 3;
     this.roundOver = false;
+    this.roundMexicos = 0;
 
     this.update();
   }
@@ -248,6 +241,10 @@ export class Game {
     // Handle old mex
     if (rollA === 21) {
       return false;
+    }
+
+    if (rollB === 21) {
+      return true;
     }
 
     // Handle doubles

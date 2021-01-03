@@ -8,7 +8,7 @@ import { BrowserRouter } from "react-router-dom";
 import { RoomEntry } from "./RoomEntry";
 import { CssBaseline, IconButton, ThemeProvider, Tooltip } from "@material-ui/core";
 import { darkTheme, lightTheme } from "./theme";
-import { Brightness4, Brightness7, Link } from "@material-ui/icons";
+import { Brightness4, Brightness7, GitHub, Link } from "@material-ui/icons";
 
 const themeMediaQuery = window.matchMedia?.("(prefers-color-scheme: dark)");
 
@@ -50,20 +50,25 @@ export function App() {
       {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
       <CssBaseline />
       <Container maxWidth="md">
-        <Box py={4} display="flex" alignItems="center" justifyContent="center">
-          <Typography variant="h3">Old Mex Online</Typography>
+        <Box py={4} display="flex" alignItems="flex-start" justifyContent="center" flexWrap="wrap">
+          <Typography variant="h3" noWrap>
+            Old Mex Online
+          </Typography>
 
-          <Box marginLeft={2}>
+          <Box marginLeft={2} display="flex" paddingTop={0.8}>
             <Tooltip title={copyText}>
               <IconButton onClick={copyLink}>
                 <Link />
               </IconButton>
             </Tooltip>
-          </Box>
-          <Box marginLeft={0}>
             <Tooltip title="Change Theme">
               <IconButton onClick={changeTheme}>
                 {theme === lightTheme ? <Brightness4 /> : <Brightness7 />}
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Source Code">
+              <IconButton href="https://github.com/mogzol/old-mex-online" target="_blank">
+                <GitHub />
               </IconButton>
             </Tooltip>
           </Box>

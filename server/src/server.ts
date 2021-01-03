@@ -43,8 +43,19 @@ interface MessageData {
   name?: string;
 }
 
-wss.on("connection", (ws, req) => {
+interface WebSocketWithHeartbeat extends WebSocket {
+  isAlive: boolean;
+}
+
+function heartbeat(this: WebSocketWithHeartbeat) {
+  this.isAlive = true;
+}
+
+wss.on("connection", (ws: WebSocketWithHeartbeat, req) => {
   log.debug("New connection");
+
+  ws.isAlive = true;
+  ws.on("pong", heartbeat);
 
   ws.on("message", (data: string) => {
     const json = JSON.parse(data) as MessageData;
@@ -75,5 +86,17 @@ wss.on("connection", (ws, req) => {
     }
   });
 });
+
+// Every 30 secs ping WebSockets to make sure they're alive
+setInterval(function ping() {
+  wss.clients.forEach((ws: WebSocketWithHeartbeat) => {
+    if (!ws.isAlive) {
+      return ws.terminate();
+    }
+
+    ws.isAlive = false;
+    ws.ping(null);
+  });
+}, 30000);
 
 log.info("Server running");

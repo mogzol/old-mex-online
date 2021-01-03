@@ -31,9 +31,9 @@ export interface GameData {
   you: string;
   name: string;
   roundOver: boolean;
+  roundMexicos: number;
   rolling: boolean;
   currentRoll: [number, number];
-  currentRollTimestamp: string;
   lowestRoll: number;
   maxRolls: number;
   players: Array<{
@@ -161,6 +161,12 @@ interface PlayerNameDialogProps {
 function PlayerNameDialog(props: PlayerNameDialogProps) {
   const [name, setName] = React.useState("");
 
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (e.key === "Enter") {
+      props.onChange(name);
+    }
+  }
+
   return (
     <Dialog open={props.open} maxWidth={"xs"} fullWidth>
       <DialogTitle>Enter your name</DialogTitle>
@@ -172,6 +178,7 @@ function PlayerNameDialog(props: PlayerNameDialogProps) {
           onChange={(e) => setName(e.target.value)}
           label="Player Name"
           inputProps={{ maxLength: 12 }}
+          onKeyDown={handleKeyDown}
         />
       </DialogContent>
       <DialogActions>

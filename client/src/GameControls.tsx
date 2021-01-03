@@ -51,7 +51,9 @@ export function GameControls(props: Props) {
   const classes = useStyles();
   const you = props.gameData?.players.find((p) => p.name === props.gameData?.you);
   const roller = props.gameData?.players.find((p) => p.rolling);
-  const roll = props.gameData?.currentRoll ?? [1, 2];
+  const roll = props.gameData?.roundOver
+    ? `${props.gameData?.lowestRoll}`.split("").map(Number)
+    : props.gameData?.currentRoll ?? [1, 2];
 
   return (
     <>
@@ -73,7 +75,9 @@ export function GameControls(props: Props) {
       <Box className={classes.diceBox}>
         <Typography variant="subtitle2" align="center" color="textSecondary">
           {props.gameData?.roundOver
-            ? "Round over"
+            ? `Round over. ${props.gameData.roundMexicos} Old Mexico${
+                props.gameData.roundMexicos === 1 ? "" : "s"
+              }.`
             : props.gameData?.lowestRoll
             ? `Must beat ${props.gameData?.lowestRoll} for ${props.gameData?.maxRolls}`
             : "Round start"}
@@ -92,7 +96,9 @@ export function GameControls(props: Props) {
           ))}
         </Box>
         <Typography variant="subtitle2" align="center" color="textSecondary">
-          Roll {roller?.rollCount} of {props.gameData?.maxRolls}
+          {props.gameData?.roundOver
+            ? `Lowest roll: ${props.gameData.lowestRoll}`
+            : `Roll ${roller?.rollCount} of ${props.gameData?.maxRolls}`}
         </Typography>
       </Box>
 

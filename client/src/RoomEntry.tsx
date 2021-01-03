@@ -6,6 +6,20 @@ export function RoomEntry() {
   const [roomName, setRoomName] = useState("");
   const history = useHistory();
 
+  function handleJoin() {
+    if (!roomName.length) {
+      return;
+    }
+
+    history.push(`/${roomName}`);
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (e.key === "Enter") {
+      handleJoin();
+    }
+  }
+
   return (
     <Box
       component={Paper}
@@ -22,13 +36,9 @@ export function RoomEntry() {
         value={roomName}
         onChange={(event) => setRoomName(event.target.value)}
         inputProps={{ maxLength: 16 }}
+        onKeyDown={handleKeyDown}
       />
-      <Button
-        variant="contained"
-        color="primary"
-        disabled={!roomName}
-        onClick={() => history.push(`/${roomName}`)}
-      >
+      <Button variant="contained" color="primary" disabled={!roomName} onClick={handleJoin}>
         Join Room
       </Button>
     </Box>
